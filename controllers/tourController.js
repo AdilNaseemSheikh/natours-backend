@@ -4,6 +4,27 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8')
 );
 
+exports.checkId = (req, res, next, val) => {
+  console.log('id ==>>', val);
+  if (+req.params.id >= tours.length) {
+    return res.status(404).send({
+      status: 'fail',
+      message: 'Invalid ID',
+    });
+  }
+  next();
+};
+
+exports.checkBody = (req, res, next) => {
+  if (!req.body.name || !req.body.price) {
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Missing Name or price',
+    });
+  }
+  next();
+};
+
 exports.getAllTours = (req, res) => {
   res.status(200).send({
     status: 'success',
@@ -18,16 +39,10 @@ exports.getTour = (req, res) => {
 
   const tour = tours.find((el) => el.id === id);
 
-  if (!tour)
-    res.status(404).send({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  else
-    res.status(200).send({
-      status: 'success',
-      data: { tour },
-    });
+  res.status(200).send({
+    status: 'success',
+    data: { tour },
+  });
 };
 
 exports.createTour = (req, res) => {
@@ -46,37 +61,22 @@ exports.createTour = (req, res) => {
 exports.deleteTour = (req, res) => {
   const id = +req.params.id;
 
-  if (id >= tours.length) {
-    res.status(404).send({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  } else {
-    res.status(204).send({
-      status: 'success',
-      data: null,
-    });
-  }
+  res.status(204).send({
+    status: 'success',
+    data: null,
+  });
 };
 
 exports.updateTour = (req, res) => {
   const id = +req.params.id;
 
   const tour = tours.find((el) => el.id === id);
-
-  if (!tour) {
-    res.status(404).send({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  } else {
-    const updatedTour = { ...tour };
-    Object.entries(req.body).forEach(([key, value]) => {
-      updatedTour[key] = value;
-    });
-    res.status(200).send({
-      status: 'success',
-      data: { tour: updatedTour },
-    });
-  }
+  const updatedTour = { ...tour };
+  Object.entries(req.body).forEach(([key, value]) => {
+    updatedTour[key] = value;
+  });
+  res.status(200).send({
+    status: 'success',
+    data: { tour: updatedTour },
+  });
 };
