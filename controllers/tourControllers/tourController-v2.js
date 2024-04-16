@@ -1,8 +1,8 @@
 // WITHOUT CATCHASYNC
 
 const fs = require('fs');
-const Tour = require('../models/tourModel');
-const APIFeature = require('../utils/apiFeature');
+const Tour = require('../../models/tourModel');
+const APIFeature = require('../../utils/apiFeature');
 
 const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8'),
