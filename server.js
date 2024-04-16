@@ -3,6 +3,13 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config({ path: './config.env' });
 
+process.on('uncaughtException', (err) => {
+  console.log('UNCAUGHT EXCEPTION. Shutting down...');
+  console.log(err.name, err.message);
+
+  process.exit(1);
+});
+
 // set .env config before requiring the app
 const app = require('./app');
 
@@ -22,12 +29,23 @@ mongoose
   .then((con) => {
     // console.log(con.connections);
     console.log('DB connection successfull');
-  })
-  .catch((err) => console.log('err->', err));
+  });
 
 const port = process.env.PORT;
 
 // START THE SERVER
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`App running on port ${port}...`);
+});
+
+// Global unhandle rejection.
+// If there is unhandled rejection anywhere in our app, it will be caught here
+
+process.on('unhandledRejection', (err) => {
+  console.log('UNHANDLED REJECTION. Shutting down...');
+  server.close(() => {
+    // give server some time to finishe its ongoing request and then exit the application
+    // exit the application
+    process.exit(1);
+  });
 });
