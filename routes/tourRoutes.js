@@ -1,5 +1,6 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
+const authController = require('../controllers/authController');
 
 // that's how we create sub application by using router
 const router = express.Router();
@@ -15,7 +16,7 @@ router.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 // '/api/v1/tours' is already picked by router, so we need to use / for current route
 router
   .route('/')
-  .get(tourController.getAllTours)
+  .get(authController.protect, tourController.getAllTours)
   .post(tourController.createTour); //tourController.checkBody,
 router
   .route('/:id')
