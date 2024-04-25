@@ -7,9 +7,20 @@ const sendEmail = require('../utils/email');
 const crypto = require('crypto');
 
 const signToken = (id) => {
+  // we can simply use user's id as payload in signing JWT
+  // secret needs to be a random string at least 32 char long
+
+  // If we are generating token with user id, then it will be available on this
+  // generated token that we can decode and extract from it
+
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: `${process.env.JWT_EXPIRES_IN}`,
   });
+};
+
+const createAndSendToken = (user, res, statusCode) => {
+  const token = signToken(user._id);
+  res.status(statusCode).json({ status: 'success', token, data: { user } });
 };
 
 exports.signUp = catchAsync(async (req, res, next) => {
@@ -22,11 +33,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     role: req.body.role || undefined,
   });
 
-  // we can simply use user's id as payload in signing JWT
-  // secret needs to be a random string at least 32 char long
-  const token = signToken(newUser._id);
-
-  res.status(201).json({ status: 'success', token, data: { user: newUser } });
+  createAndSendToken(newUser, res, 201);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -45,9 +52,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  const token = signToken(user._id);
-
-  res.status(200).json({ status: 'success', token });
+  createAndSendToken(user, res, 200);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -125,7 +130,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   const message = `Forgot your password? Submit a PATCH request with your password and confirm password to :${resetUrl}.\n
   If you didn't forgot you password, you can safely ignore this email.`;
-  console.log(resetUrl);
 
   // we want to do some more than just sending error message to client. That's why trycatch instead of next(new AppError)
   try {
@@ -181,7 +185,26 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // user.passwordChangedAt = Date.now();
 
   // 4) log the user in
-  const token = signToken(user._id);
+  createAndSendToken(user, res, 200);
+});
 
-  res.status(200).json({ status: 'success', token });
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) get user from docs
+  const id = req.user.id; // user is available as we attach it with req in protect middleware
+  const user = await User.findById(id).select('+password');
+
+  // 2) check if the POSTed password matches the user's current password
+  const password = req.body.passwordCurrent;
+  if (!(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect current password', 401));
+  }
+
+  // 3) if password is correct, update the password
+  user.password = req.body.password;
+  user.confirmPassword = req.body.confirmPassword;
+
+  await user.save();
+
+  // 4) log user in (send JWT)
+  createAndSendToken(user, res, 200);
 });

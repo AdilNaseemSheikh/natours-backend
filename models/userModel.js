@@ -41,6 +41,11 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwrodResetToken: String,
   passwrodResetExpire: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -63,6 +68,12 @@ userSchema.pre('save', async function (next) {
   // cuz sometime due to slow saving in db may cause passwordChangedAt greater than token issue time
   // setting passwordChangedAt 1 second in the past will ensure that token issued time is greater than passwordChangedAt
   this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  // this points to the current query
+  this.find({ active: { $ne: false } });
   next();
 });
 
@@ -98,11 +109,6 @@ userSchema.methods.createPasswordResetToken = async function () {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-
-  console.log(
-    { plainToken: resetToken },
-    { passwrodResetToken: this.passwrodResetToken },
-  );
 
   // token will expire after 10 mins
   this.passwrodResetExpire = Date.now() + 10 * 60 * 1000;
