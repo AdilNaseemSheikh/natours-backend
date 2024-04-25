@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto'); //builtin node module
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -15,6 +16,11 @@ const userSchema = new mongoose.Schema({
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
   photo: String,
+  role: {
+    type: String,
+    enum: ['user', 'guide', 'lead-guide', 'admin'],
+    default: 'user',
+  },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
@@ -33,6 +39,8 @@ const userSchema = new mongoose.Schema({
     },
   },
   passwordChangedAt: Date,
+  passwrodResetToken: String,
+  passwrodResetExpire: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -45,6 +53,16 @@ userSchema.pre('save', async function (next) {
 
   this.confirmPassword = undefined; //do not store it in db
 
+  next();
+});
+
+userSchema.pre('save', async function (next) {
+  // if password is not modified & doc is newly created then also dont update the passwordChangedAt
+  if (!this.isModified('password') || this.isNew) return next();
+  // passwordChangedAt should be less than token issue time otherwise protect will not work
+  // cuz sometime due to slow saving in db may cause passwordChangedAt greater than token issue time
+  // setting passwordChangedAt 1 second in the past will ensure that token issued time is greater than passwordChangedAt
+  this.passwordChangedAt = Date.now() - 1000;
   next();
 });
 
@@ -68,6 +86,29 @@ userSchema.methods.changedPasswordAfter = async function (JWTTimestamp) {
   }
   // false means not changed
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = async function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // do not store plain token in db but also no need to involve bcrypt to encrypt it,
+  // just apply simple encryption using builtin crypto module
+
+  this.passwrodResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  console.log(
+    { plainToken: resetToken },
+    { passwrodResetToken: this.passwrodResetToken },
+  );
+
+  // token will expire after 10 mins
+  this.passwrodResetExpire = Date.now() + 10 * 60 * 1000;
+
+  // return plain token to be used in mail
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);

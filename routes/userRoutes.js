@@ -7,6 +7,9 @@ const router = express.Router();
 router.post('/signup', authController.signUp);
 router.post('/login', authController.login);
 
+router.post('/forgotPassword', authController.forgotPassword);
+router.patch('/resetPassword/:token', authController.resetPassword);
+
 // following routes are to be used by admin etc. to CRUD users.
 router
   .route('/')
