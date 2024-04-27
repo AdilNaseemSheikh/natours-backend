@@ -20,6 +20,20 @@ const signToken = (id) => {
 
 const createAndSendToken = (user, res, statusCode) => {
   const token = signToken(user._id);
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true; // only send cookie on https protocol
+  }
+
+  res.cookie('jwt', token, cookieOptions);
+
+  user.password = undefined; // remove password from response
+
   res.status(statusCode).json({ status: 'success', token, data: { user } });
 };
 
@@ -161,7 +175,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1) get user based on token
   const hashedToken = crypto
     .createHash('sha256')
-    .update(req.params.token) // --> /:token
+    .update(req.params.token) // --> resetPassword/:token
     .digest('hex');
 
   // 2) if user found and token is not expired, set new password

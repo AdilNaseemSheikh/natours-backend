@@ -1,7 +1,11 @@
 const express = require('express');
 const morgan = require('morgan');
-
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const AppError = require('./utils/appError');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const globalErrorHandler = require('./controllers/errorController.js');
 
@@ -10,10 +14,51 @@ const userRouter = require('./routes/userRoutes');
 
 const app = express();
 
-// 1) MIDDLEWARE
+// 1) GLOBAL MIDDLEWARE
+
+// SET HTTP SECURITY HEADERS
+app.use(helmet());
+
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
-app.use(express.json());
+// rate limiting middleware
+const limiter = rateLimit({
+  max: 100, // max requests
+  windowMs: 60 * 60 * 1000, // time frame 1hr,
+  message: 'Too many requests from same IP 😲. Try again after 1 hour.',
+});
+
+app.use('/api', limiter);
+
+// BODY PARSER, reading data from body to req.body
+// app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // limit body data to 10kb
+
+// DATA SANITIZATION
+// a) data sanatization against NoSql query injections
+// ({"gt":""}) this query returns true and we can login using this query
+app.use(mongoSanitize()); // this removes malicious symbols ($) from body
+
+// b) data sanatization against XSS
+app.use(xss()); // it cleans user input from malicious html
+
+// PREVENT PARAMETER POLLUTION [sort=name&sort=price] wrong logic and server will crash
+// forsome parameters, we want multiple values like get all the tours with duration 5 and 8.
+// We will send query ?duration=5&duration=8
+// we can white list some parameters to accept duplicate values
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'ratingsQuantity',
+      'ratingsAverage',
+      'maxGroupSize',
+      'price',
+    ],
+  }),
+);
+
+// SERVING STATIC FILES
 app.use(express.static(`${__dirname}/public`));
 
 // defining custom middleware
