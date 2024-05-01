@@ -1,4 +1,4 @@
-// WITHOUT API CLASSES
+// WITHOUT APIFEATURE CLASSES
 
 const fs = require('fs');
 const Tour = require('../../models/tourModel');

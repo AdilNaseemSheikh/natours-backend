@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const User = require('./userModel');
 // const validator = require('validator');
 
 // SCHEMA
@@ -72,6 +73,41 @@ const tourSchema = mongoose.Schema(
     },
     startDates: [Date],
     secretTour: { type: Boolean, default: false },
+
+    startLocation: {
+      // thats how we define GeoJSON(Geo spatial JSON) in Mongodb
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    // embeding
+    // guides: Array,
+    // refrencing
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   // schema options
   {
@@ -84,12 +120,29 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+// Virtual Populate, it will keep array of review ids on tour without persisting it in db
+// virtual populate is useful when we dont have parent referencing to child
+// but we want all the child associated with this parent
+tourSchema.virtual('reviews', {
+  // find 'tour' field in 'Review' model whose value is '_id' in current model
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
+});
+
 // DOCUMENT MIDDLEWARE (pre): runs before .save() & .create()
 tourSchema.pre('save', function (next) {
   // in save middleware, this points to the currently processed document
   this.slug = slugify(this.name, { lower: true });
   next();
 });
+
+// embeding guides
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromise = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromise);
+//   next();
+// });
 
 // DOCUMENT MIDDLEWARE (post): runs after .save() & .create()
 // tourSchema.post('save', function (doc, next) {
@@ -100,10 +153,18 @@ tourSchema.pre('save', function (next) {
 // QUERY MIDDLEWARE (pre)
 // tourSchema.pre('find', function () {
 tourSchema.pre(/^find/, function (next) {
-  // run this middleware not only for find, but every command starts with find (find, findOne, findById, etc.)
+  // run this middleware not only for find, but every command starts with find (find, findOne, findById, findByIdAndUpdate etc.)
   // in query middleware, this points to the query object & we can call query methods on it
   this.start = Date.now();
   this.find({ secretTour: { $ne: true } }); // find tour where secretTour!==true
+  next();
+});
+
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides', // replace guides with whole object which the refer to
+    select: '-__v -passwordChangedAt', // exclude while populating
+  });
   next();
 });
 
