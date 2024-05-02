@@ -1,11 +1,28 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('../routes/reviewRoutes');
 
 // that's how we create sub application by using router
 const router = express.Router();
 
 // router.param('id', tourController.checkId);
+
+// NESTED ROUTES FOR REVIEWS IN A TOUR
+// router
+//   .route('/:tourId/reviews')
+//   .post(
+//     authController.protect,
+//     authController.restrictTo('user'),
+//     reviewController.createReview,
+//   )
+//   .get(reviewController.getAllReviews);
+
+/*Above code works fine but it should not be in tourRouter because it starts with /tour/tourId. But in reviewRouter
+because it it does CRUD reviews, so we re-direct it to review controller
+*/
+
+router.use('/:tourId/reviews', reviewRouter);
 
 router
   .route('/top-5-cheap')
