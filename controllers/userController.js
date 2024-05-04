@@ -1,7 +1,7 @@
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-
+const factory = require('./handlerFactory');
 const filterObj = (obj, ...allowedFields) => {
   const filteredObj = {};
   allowedFields.forEach((field) => {
@@ -10,46 +10,16 @@ const filterObj = (obj, ...allowedFields) => {
   return filteredObj;
 };
 
-exports.getAllUsers = catchAsync(async (req, res) => {
-  const users = await User.find({});
-
-  // SEND RESPONSE
-  res.status(200).send({
-    status: 'success',
-    requestedAt: req.requestTime,
-    results: users.length,
-    data: { users },
-  });
-});
+exports.getUser = factory.getOne(User)
+// do not update password here
+exports.updateUser = factory.updateOne(User);
+exports.deleteUser = factory.deleteOne(User);
+exports.getAllUsers = factory.getAll(User)
 
 exports.createUser = (req, res) => {
   res.status(500).json({
     status: 'error',
-    message: 'This route is not ready yet.',
-  });
-};
-
-exports.getUser = (req, res) => {
-  const id = +req.params.id;
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not ready yet.',
-  });
-};
-
-exports.updateUser = (req, res) => {
-  const id = +req.params.id;
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not ready yet.',
-  });
-};
-
-exports.deleteUser = (req, res) => {
-  const id = +req.params.id;
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not ready yet.',
+    message: 'Please use /signup route.',
   });
 };
 
