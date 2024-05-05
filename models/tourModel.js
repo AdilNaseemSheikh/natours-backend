@@ -116,6 +116,10 @@ const tourSchema = mongoose.Schema(
   },
 );
 
+// tourSchema.index({ price: 1 }); // 1 means sort in ascending order
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
