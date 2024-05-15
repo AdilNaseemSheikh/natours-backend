@@ -36,6 +36,14 @@ router
     tourController.getMonthlyPlan,
   );
 
+// /tours-within/500/center/45,-93/unit/mi
+router
+  .route('/tours-within/:distance/center/:center/unit/:unit')
+  .get(tourController.getToursWithin);
+
+// tours in ascending order from a specified distance
+router.route('/distances/:latlng/unit/:unit').get(tourController.getDistances);
+
 // '/api/v1/tours' is already picked by router, so we need to use / for current route
 router
   .route('/')

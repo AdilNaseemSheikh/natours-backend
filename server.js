@@ -5,7 +5,7 @@ dotenv.config({ path: './config.env' });
 
 process.on('uncaughtException', (err) => {
   console.log('UNCAUGHT EXCEPTION. Shutting down...');
-  console.log(err);
+  console.log('💣', err, '💣');
 
   process.exit(1);
 });
@@ -43,6 +43,7 @@ const server = app.listen(port, () => {
 
 process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION. Shutting down...');
+  console.log('💣', err, '💣');
   server.close(() => {
     // give server some time to finishe its ongoing request and then exit the application
     // exit the application

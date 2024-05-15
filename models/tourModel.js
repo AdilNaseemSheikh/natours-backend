@@ -13,6 +13,8 @@ const tourSchema = mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1'],
       max: [5, 'Rating must be below 5.0'],
+      // setter function receives incomming value and returns modified value which is stored
+      set: (val) => Math.round(val * 10) / 10, // 4.6666 * 10 => 46.7 / 10 => 4.7
     }, //schema type options
     ratingsQuantity: { type: Number, default: 0 },
     // message to be displayed when not provided the value of required field
@@ -119,6 +121,7 @@ const tourSchema = mongoose.Schema(
 // tourSchema.index({ price: 1 }); // 1 means sort in ascending order
 tourSchema.index({ price: 1, ratingsAverage: -1 });
 tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' }); // to tell mongodb that this data will contain earth coordinates
 
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
@@ -181,11 +184,11 @@ tourSchema.post(/^find/, function (docs, next) {
 
 // QUERY MIDDLEWARE (pre)
 
-tourSchema.pre('aggregate', function (next) {
-  // this points to the current aggregation object
-  this._pipeline.unshift({ $match: { secretTour: { $ne: true } } });
-  next();
-});
+// tourSchema.pre('aggregate', function (next) {
+//   // this points to the current aggregation object
+//   this._pipeline.unshift({ $match: { secretTour: { $ne: true } } });
+//   next();
+// });
 
 // MODEL created out of schema
 const Tour = mongoose.model('Tour', tourSchema);

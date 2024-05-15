@@ -180,3 +180,69 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
     data: { plan },
   });
 });
+
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, unit, center } = req.params;
+  const [lat, lng] = center.split(',');
+  // we need to convert distance to radian, thats what centerSphere expects
+  const radiusOfEarth = unit === 'mi' ? 3963.2 : 6378.1; // unit should be mi or km
+  const radius = distance / radiusOfEarth;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in format lat,lng.',
+        400,
+      ),
+    );
+  }
+
+  const tours = await Tour.find({
+    // find tours where start location is within the radius of specified distance from a given point
+    // https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+
+  res
+    .status(200)
+    .json({ status: 'success', results: tours.length, data: { data: tours } });
+});
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in format lat,lng.',
+        400,
+      ),
+    );
+  }
+
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [+lng, +lat],
+        },
+        distanceField: 'distance', // field which will be created and where distance will be stored
+        distanceMultiplier: multiplier, // convert into km/mi
+      },
+    },
+    {
+      $project: {
+        distance: 1,
+        name: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    results: distances.length,
+    data: { data: distances },
+  });
+});
