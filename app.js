@@ -6,14 +6,27 @@ const AppError = require('./utils/appError');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const path = require('path');
 
 const globalErrorHandler = require('./controllers/errorController.js');
 
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
+
+// tell app which templating engine we are going to use
+app.set('view engine', 'pug');
+
+// tell where views(templates) are located
+app.set('views', path.join(__dirname, 'views'));
+
+// SERVING STATIC FILES
+// (all the static assets like imgs, css etc. will be served from folder called public)
+// this is the reason that css/styles.css or img/favicon.png works correctly
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 1) GLOBAL MIDDLEWARE
 
@@ -59,9 +72,6 @@ app.use(
   }),
 );
 
-// SERVING STATIC FILES
-app.use(express.static(`${__dirname}/public`));
-
 // defining custom middleware
 app.use((req, res, next) => {
   console.log('Hello from Middleware 🐶');
@@ -86,6 +96,7 @@ app.use((req, res, next) => {
 // app.route('/api/v1/tours').get(getAllTours).post(createTour);
 
 // iii) this process is called mounting a router on a specific route
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
