@@ -18,6 +18,7 @@ router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
 router.patch('/updateMe', userController.updateMe);
 router.delete('/deleteMe', userController.deleteMe);
+router.get('/logout', authController.logout);
 
 // following routes are to be used by admin etc. to CRUD users.
 router.use(authController.restrictTo('admin'));

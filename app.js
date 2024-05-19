@@ -7,6 +7,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 const globalErrorHandler = require('./controllers/errorController.js');
 
@@ -44,9 +45,26 @@ const limiter = rateLimit({
 
 app.use('/api', limiter);
 
+// allow leaflet cdn
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "script-src 'self' https://unpkg.com;",
+  );
+  return next();
+});
+
 // BODY PARSER, reading data from body to req.body
 // app.use(express.json());
 app.use(express.json({ limit: '10kb' })); // limit body data to 10kb
+app.use(cookieParser()); // parse cookies
+// to get data html from form submited through action
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: '10kb',
+  }),
+);
 
 // DATA SANITIZATION
 // a) data sanatization against NoSql query injections
@@ -75,6 +93,7 @@ app.use(
 // defining custom middleware
 app.use((req, res, next) => {
   console.log('Hello from Middleware 🐶');
+  console.log(req.cookies);
   // forget this call and you will never go to the next middleware
   next();
 });

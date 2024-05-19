@@ -77,6 +77,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {
@@ -113,8 +115,47 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // if code is reached at this point, no error occur in any of the above case, so execute next middleware
   req.user = currentUser;
+  res.locals.user = currentUser; // for pug
   next();
 });
+
+exports.isLoggedIn = async (req, res, next) => {
+  // please do not cause any error, just check if user is logged in or not
+  let token;
+  // 1) Get token and check if its there
+  try {
+    if (req.cookies.jwt) {
+      token = req.cookies.jwt;
+
+      // 2) Verify token if it is valid, not being modified
+      const decoded = await promisify(jwt.verify)(
+        token,
+        process.env.JWT_SECRET,
+      );
+
+      // 3) Check if user who is requesting still exists in db
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        next();
+        return;
+      }
+
+      // 4) Check if user has changed his password after the token was issued
+      const isChanged = await currentUser.changedPasswordAfter(decoded.iat);
+      if (isChanged) {
+        next();
+        return;
+      }
+
+      // user will be available in pug template
+      res.locals.user = currentUser;
+      return next();
+    }
+  } catch (err) {
+    return next();
+  }
+  next();
+};
 
 exports.restrictTo = (roles = []) => {
   return catchAsync(async (req, res, next) => {
@@ -221,4 +262,14 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   // 4) log user in (send JWT)
   createAndSendToken(user, res, 200);
+});
+
+exports.logout = catchAsync(async (req, res, next) => {
+  const cookieOptions = {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  };
+  res.cookie('jwt', 'random', cookieOptions);
+
+  res.status(200).json({ status: 'success' });
 });
