@@ -5,10 +5,13 @@ const updateSettings = async (data, type) => {
       `http://localhost:8000/api/v1/users/${endpoint}`,
       {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        headers:
+          type === 'Data'
+            ? {}
+            : {
+                'Content-Type': 'application/json',
+              },
+        body: type === 'Data' ? data : JSON.stringify(data),
       },
     );
     const res = await response.json();
@@ -28,10 +31,17 @@ const userPasswordForm = document.querySelector('.form-user-password');
 
 if (userDataForm) {
   userDataForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = new FormData();
     const name = userDataForm.querySelector('#name').value;
     const email = userDataForm.querySelector('#email').value;
-    e.preventDefault();
-    updateSettings({ name, email }, 'Data');
+    const photo = document.getElementById('photo').files[0];
+
+    form.append('name', name);
+    form.append('email', email);
+    form.append('photo', photo);
+
+    updateSettings(form, 'Data');
   });
 }
 
