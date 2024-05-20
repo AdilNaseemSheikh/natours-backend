@@ -93,7 +93,7 @@ app.use(
 // defining custom middleware
 app.use((req, res, next) => {
   console.log('Hello from Middleware 🐶');
-  console.log(req.cookies);
+  // console.log(req.cookies);
   // forget this call and you will never go to the next middleware
   next();
 });
