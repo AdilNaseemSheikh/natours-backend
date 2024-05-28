@@ -3,7 +3,7 @@ const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/appError');
-const sendEmail = require('../utils/email');
+const Email = require('../utils/email');
 const crypto = require('crypto');
 
 const signToken = (id) => {
@@ -44,8 +44,12 @@ exports.signUp = catchAsync(async (req, res, next) => {
     password: req.body.password,
     confirmPassword: req.body.confirmPassword,
     passwordChangedAt: req.body.passwordChangedAt || undefined,
-    role: req.body.role || undefined,
   });
+
+  // const url = `http://localhost:8000/me`;
+  const url = `${req.protocol}://${req.get('host')}/me`;
+
+  await new Email(newUser, url).sendWelcome();
 
   createAndSendToken(newUser, res, 201);
 });
@@ -183,16 +187,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 3) send this token to users email
   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
 
-  const message = `Forgot your password? Submit a PATCH request with your password and confirm password to :${resetUrl}.\n
-  If you didn't forgot you password, you can safely ignore this email.`;
-
   // we want to do some more than just sending error message to client. That's why trycatch instead of next(new AppError)
   try {
-    await sendEmail({
-      subject: 'Your password reset token (valid for next 10 min)',
-      message,
-      to: user.email,
-    });
+    await new Email(user, resetUrl).sendPasswordReset();
   } catch (err) {
     user.passwrodResetToken = undefined;
     user.passwrodResetExpire = undefined;

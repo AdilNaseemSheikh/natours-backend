@@ -81,7 +81,7 @@ exports.resizeTourImages = async (req, res, next) => {
   req.body.imageCover = imageCoverFilename;
 
   // 2) other image
-  req.body.images = [];
+  req.body.images = []; // initialize .images
   await Promise.all(
     // as the callback to map is async, it will return a promise and using map will return array of promises.
     // we await that whole array so that move to next line when all the promises are finished

@@ -34,7 +34,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // SET HTTP SECURITY HEADERS
 app.use(helmet());
 
-if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'development') 
+  app.use(morgan('dev'));
 
 // rate limiting middleware
 const limiter = rateLimit({
