@@ -1,3 +1,4 @@
+const Booking = require('../models/bookingModel');
 const Tour = require('../models/tourModel');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
@@ -67,5 +68,18 @@ exports.updateUserData = catchAsync(async (req, res, next) => {
     title: 'Your account',
     // if we do not pass updated data, it will use user passed from protect middleware using locales
     user: updatedUser,
+  });
+});
+
+exports.getMyTours = catchAsync(async (req, res, next) => {
+  const bookings = await Booking.find({ user: req.user.id });
+  const tourIds = bookings.map((el) => el.tour);
+
+  // find tours where _id is in tourIds array
+  const tours = await Tour.find({ _id: { $in: tourIds } });
+
+  res.status(200).render('overview', {
+    title: 'My Tours',
+    tours,
   });
 });

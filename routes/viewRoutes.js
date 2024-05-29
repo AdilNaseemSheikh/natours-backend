@@ -1,12 +1,20 @@
 const express = require('express');
 const viewsController = require('../controllers/viewsController');
 const authController = require('../controllers/authController');
+const bookingController = require('../controllers/bookingController');
 
 const router = express.Router();
 
 // SSR using pug
 // router.get('/',viewsController.getOverview); same as below
-router.route('/').get(authController.isLoggedIn, viewsController.getOverview);
+// this route is hit when payment is made
+router
+  .route('/')
+  .get(
+    bookingController.createBookingCheckout,
+    authController.isLoggedIn,
+    viewsController.getOverview,
+  );
 
 router
   .route('/tour/:slug')
@@ -16,6 +24,7 @@ router
   .get(authController.isLoggedIn, viewsController.getLoginForm);
 
 router.route('/me').get(authController.protect, viewsController.getAccount);
+router.route('/my-tours').get(authController.protect, viewsController.getMyTours);
 
 router
   .route('/submit-user-data')

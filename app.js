@@ -15,6 +15,7 @@ const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const viewRouter = require('./routes/viewRoutes');
+const bookingRouter = require('./routes/bookingRoutes');
 
 const app = express();
 
@@ -34,8 +35,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // SET HTTP SECURITY HEADERS
 app.use(helmet());
 
-if (process.env.NODE_ENV === 'development') 
-  app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
 // rate limiting middleware
 const limiter = rateLimit({
@@ -50,7 +50,7 @@ app.use('/api', limiter);
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "script-src 'self' https://unpkg.com;",
+    "script-src 'self' https://unpkg.com https://js.stripe.com",
   );
   return next();
 });
@@ -120,6 +120,7 @@ app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 
 // if code reaches here, it did not enter any of above routes
 
