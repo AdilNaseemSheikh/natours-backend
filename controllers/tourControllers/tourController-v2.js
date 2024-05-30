@@ -9,7 +9,6 @@ const tours = JSON.parse(
 );
 
 exports.checkId = (req, res, next, val) => {
-  console.log('id ==>>', val);
   if (+req.params.id >= tours.length) {
     return res.status(404).send({
       status: 'fail',
@@ -37,7 +36,6 @@ exports.aliasTopTours = (req, res, next) => {
 };
 
 exports.getAllTours = async (req, res) => {
-  console.log(req.query);
   try {
     // EXECUTE QUERY
     const features = new APIFeature(Tour.find(), req.query);

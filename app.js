@@ -8,6 +8,7 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 
 const globalErrorHandler = require('./controllers/errorController.js');
 
@@ -98,6 +99,9 @@ app.use((req, res, next) => {
   // forget this call and you will never go to the next middleware
   next();
 });
+
+// to compress the response sent to client either in text form or JSON
+app.use(compression());
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
