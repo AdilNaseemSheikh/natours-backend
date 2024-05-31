@@ -50,7 +50,9 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
           product_data: {
             name: `${tour.name} Tour`,
             description: tour.summary,
-            images: [`${req.protocol}://${req.get('host')}/img/tours/${tour.imageCover}`],
+            images: [
+              `${req.protocol}://${req.get('host')}/img/tours/${tour.imageCover}`,
+            ],
           },
           unit_amount: tour.price * 100, // Stripe expects the amount value in cents
         },
@@ -69,6 +71,7 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 });
 
 const createBookingCheckout = async (session) => {
+  console.log('creating booking with session--> ', session);
   const tour = session?.client_reference_id;
   const user = (await User.find({ email: session?.customer_email }))?.id;
   const price = session.amount_total / 100;
