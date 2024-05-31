@@ -18,6 +18,7 @@ const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const viewRouter = require('./routes/viewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
+const bookingController = require('./controllers/bookingController.js');
 
 const app = express();
 
@@ -69,6 +70,13 @@ app.use((req, res, next) => {
   );
   return next();
 });
+
+// this route will be called by stripe. It must be before express.json cuz stripe needs body data in raw form, not in json
+app.post(
+  '/webhook-checkout',
+  express.raw({ type: 'application/json' }),
+  bookingController.webhookCheckout,
+);
 
 // BODY PARSER, reading data from body to req.body
 // app.use(express.json());

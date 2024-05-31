@@ -1,9 +1,10 @@
 const express = require('express');
 const viewsController = require('../controllers/viewsController');
 const authController = require('../controllers/authController');
-const bookingController = require('../controllers/bookingController');
 
 const router = express.Router();
+
+router.use(viewsController.alerts)
 
 // SSR using pug
 // router.get('/',viewsController.getOverview); same as below
@@ -11,7 +12,7 @@ const router = express.Router();
 router
   .route('/')
   .get(
-    bookingController.createBookingCheckout,
+    // bookingController.createBookingCheckout,
     authController.isLoggedIn,
     viewsController.getOverview,
   );

@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "start:prod": "set NODE_ENV=production nodemon server.js",
     "watch:js": "parcel watch ./public/js/index.js --out-dir ./public/js --out-file bundle.js",
-    "build": "parcel build ./public/js/*.js --out-dir ./public/js/dist --out-file bundle.js",
+    "build": "parcel build ./public/js/index.js --out-dir ./public/js/dist --out-file bundle.js",
     "debug": "ndb server.js"
   },
   "author": "Adil Naseem",
@@ -52,6 +52,6 @@
     "prettier": "^3.2.5"
   },
   "engines": {
-    "node": ">=10.0.0"
+    "node": "^20"
   }
 }
