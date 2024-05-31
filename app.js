@@ -9,6 +9,7 @@ const hpp = require('hpp');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
+const cors = require('cors');
 
 const globalErrorHandler = require('./controllers/errorController.js');
 
@@ -20,11 +21,24 @@ const bookingRouter = require('./routes/bookingRoutes');
 
 const app = express();
 
+app.enable('trust proxy');
+
 // tell app which templating engine we are going to use
 app.set('view engine', 'pug');
 
 // tell where views(templates) are located
 app.set('views', path.join(__dirname, 'views'));
+
+// implementing CORS
+app.use(cors());
+
+// app.use(cors({
+//   origin:'https://natours.com' // to enable CORS on a specific url
+// }))
+
+// for complex requests(put, patch, delete) there is a pre-flight phase and for preflight
+// app.options call is made. We need to enable CORS for these complex requests in this phase as well
+app.options('*', cors());
 
 // SERVING STATIC FILES
 // (all the static assets like imgs, css etc. will be served from folder called public)
