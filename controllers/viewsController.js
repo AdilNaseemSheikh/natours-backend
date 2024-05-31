@@ -83,3 +83,13 @@ exports.getMyTours = catchAsync(async (req, res, next) => {
     tours,
   });
 });
+
+exports.alerts = (req, res, next) => {
+  const { alert } = req.query;
+  if ((alert === 'booking')) {
+    // sometime, success url is called before the the webhook, according to stripe docs
+    res.locals.alert = // base.pug will pick this locals.alert
+      "Your booking was successfull. If it didn't show up immedietely, please check again later.";
+  }
+  next();
+};
